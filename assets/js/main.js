@@ -1,143 +1,125 @@
-// Impulse Design - Main JavaScript File
+/* ---------------------------------------------------
+   Impulse Design — vanilla JS interactions
+   - Mobile menu
+   - Smooth scrolling with sticky-header offset
+   - IntersectionObserver reveal + active nav
+   - Lazy-load safety net
+   - Contact form mailto fallback
+   - Header shadow on scroll
+   --------------------------------------------------- */
+(function () {
+  const $ = (sel, ctx = document) => ctx.querySelector(sel);
+  const $$ = (sel, ctx = document) => Array.from(ctx.querySelectorAll(sel));
 
-// DOM Content Loaded Event
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('Impulse Design loaded successfully!');
-    
-    // Initialize all functionality
-    initScrollAnimations();
-    initSmoothScroll();
-    initNavigationHighlight();
-    initResponsiveMenu();
-});
+  const nav = $("#site-nav");
+  const btn = $("#menuBtn");
+  const header = document.querySelector("header");
 
-// Smooth Scroll for Navigation Links
-function initSmoothScroll() {
-    const navLinks = document.querySelectorAll('nav a[href^="#"]');
-    
-    navLinks.forEach(link => {
-        link.addEventListener('click', function(e) {
-            e.preventDefault();
-            
-            const targetId = this.getAttribute('href');
-            const targetSection = document.querySelector(targetId);
-            
-            if (targetSection) {
-                targetSection.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'start'
-                });
-            }
-        });
+  // Mobile menu toggle
+  if (btn && nav) {
+    btn.addEventListener("click", () => {
+      const open = nav.getAttribute("data-open") === "true";
+      nav.setAttribute("data-open", String(!open));
+      btn.setAttribute("aria-expanded", String(!open));
     });
-}
+  }
 
-// Scroll Animations
-function initScrollAnimations() {
-    const observerOptions = {
-        threshold: 0.1,
-        rootMargin: '0px 0px -50px 0px'
-    };
-    
-    const observer = new IntersectionObserver(function(entries) {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('active');
-            }
-        });
-    }, observerOptions);
-    
-    // Add fade-in class to all sections
-    const sections = document.querySelectorAll('section');
-    sections.forEach(section => {
-        section.classList.add('fade-in');
-        observer.observe(section);
+  // Close menu when a link is clicked
+  $$("#navList a").forEach(a => {
+    a.addEventListener("click", () => {
+      if (nav) nav.setAttribute("data-open","false");
+      if (btn) btn.setAttribute("aria-expanded","false");
     });
-}
+  });
 
-// Navigation Highlight on Scroll
-function initNavigationHighlight() {
-    const sections = document.querySelectorAll('section[id]');
-    const navLinks = document.querySelectorAll('nav a[href^="#"]');
-    
-    function highlightNavigation() {
-        let currentSection = '';
-        
-        sections.forEach(section => {
-            const sectionTop = section.offsetTop;
-            const sectionHeight = section.clientHeight;
-            
-            if (window.scrollY >= (sectionTop - 200)) {
-                currentSection = section.getAttribute('id');
-            }
-        });
-        
-        navLinks.forEach(link => {
-            link.classList.remove('active');
-            if (link.getAttribute('href') === `#${currentSection}`) {
-                link.classList.add('active');
-            }
-        });
-    }
-    
-    window.addEventListener('scroll', highlightNavigation);
-}
+  // Smooth scroll with header offset (and reduced-motion support)
+  const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const headerOffset = () => (header ? header.getBoundingClientRect().height : 0);
+  $$("#navList a[href^='#'], a.btn[href^='#']").forEach(link => {
+    link.addEventListener("click", (e) => {
+      const id = link.getAttribute("href");
+      if (!id || id === "#") return;
+      const target = document.querySelector(id);
+      if (!target) return;
 
-// Responsive Mobile Menu
-function initResponsiveMenu() {
-    // This function can be expanded for mobile menu functionality
-    // Currently set up for future mobile menu toggle
-    
-    const menuButton = document.querySelector('.mobile-menu-toggle');
-    const nav = document.querySelector('nav ul');
-    
-    if (menuButton && nav) {
-        menuButton.addEventListener('click', function() {
-            nav.classList.toggle('active');
-            this.classList.toggle('active');
-        });
-    }
-}
+      e.preventDefault();
+      const y = target.getBoundingClientRect().top + window.pageYOffset - headerOffset() - 8;
 
-// Utility Functions
-function debounce(func, wait) {
-    let timeout;
-    return function executedFunction(...args) {
-        const later = () => {
-            clearTimeout(timeout);
-            func(...args);
-        };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-    };
-}
-
-// Window Resize Handler
-window.addEventListener('resize', debounce(function() {
-    // Handle window resize events
-    console.log('Window resized');
-}, 250));
-
-// Form Handling (if forms are added later)
-function initFormHandling() {
-    const forms = document.querySelectorAll('form');
-    
-    forms.forEach(form => {
-        form.addEventListener('submit', function(e) {
-            e.preventDefault();
-            // Add form submission logic here
-            console.log('Form submitted');
-        });
+      if (prefersReduced) {
+        window.scrollTo(0, y);
+      } else {
+        window.scrollTo({ top: y, behavior: "smooth" });
+      }
+      history.replaceState(null, "", id);
     });
-}
+  });
 
-// Export functions for potential use in other scripts
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = {
-        initSmoothScroll,
-        initScrollAnimations,
-        initNavigationHighlight,
-        initResponsiveMenu,
-        debounce
-    };
-}
+  // Reveal on scroll + active nav highlighting
+  const revealEls = $$(".reveal");
+  const navLinks = $$("#navList a[href^='#']");
+  const setActive = (id) => {
+    navLinks.forEach(a => a.removeAttribute("aria-current"));
+    const active = $(`#navList a[href="#${id}"]`);
+    if (active) active.setAttribute("aria-current", "page");
+  };
+
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add("is-visible");
+        const id = entry.target.id;
+        if (id) setActive(id);
+        io.unobserve(entry.target); // reveal once
+      }
+    });
+  }, { threshold: 0.2 });
+
+  revealEls.forEach(el => io.observe(el));
+
+  // Header drop shadow when scrolling
+  const onScroll = () => {
+    if (window.scrollY > 6) document.body.classList.add("scrolled");
+    else document.body.classList.remove("scrolled");
+  };
+  onScroll();
+  window.addEventListener("scroll", onScroll, { passive: true });
+
+  // Mailto fallback for contact form (no backend)
+  const form = $("#contactForm");
+  if (form) {
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const data = new FormData(form);
+      const name = encodeURIComponent(data.get("name") || "");
+      const email = encodeURIComponent(data.get("email") || "");
+      const message = encodeURIComponent(data.get("message") || "");
+      const subject = `New inquiry from ${decodeURIComponent(name)}`;
+      const body = `Name: ${decodeURIComponent(name)}%0AEmail: ${decodeURIComponent(email)}%0A%0A${decodeURIComponent(message)}`;
+      const to = "hello@impulsedesign.in"; // <- update in hand-off if needed
+      window.location.href = `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${body}`;
+    });
+  }
+
+  // Lazy-load safety net for older browsers (images)
+  if (!("loading" in HTMLImageElement.prototype)) {
+    $$(".work-grid img, .clients-grid img").forEach(img => {
+      const src = img.getAttribute("src");
+      if (src) {
+        const pre = new Image();
+        pre.src = src;
+      }
+    });
+  }
+
+  // Pause showreel when it exits viewport (saves battery)
+  const video = document.querySelector(".showreel");
+  if (video && "IntersectionObserver" in window) {
+    const vio = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (!e.isIntersecting) { try { video.pause(); } catch(_){} }
+        else { try { video.play(); } catch(_){} }
+      });
+    }, { threshold: 0.25 });
+    vio.observe(video);
+  }
+})();
