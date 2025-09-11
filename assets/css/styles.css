@@ -1,147 +1,82 @@
-/* Impulse Design - Main Stylesheet */
+/* ---------------------------------------
+   Impulse Design — SPINX-inspired styling
+   External layer (below-the-fold + effects)
+   --------------------------------------- */
 
-/* Reset and Base Styles */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+/* Accessibility helper for the "Skip to content" link */
+.visually-hidden-focusable {
+  position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;
+}
+.visually-hidden-focusable:focus {
+  position:static;width:auto;height:auto;margin:8px;padding:8px;background:#000;color:#fff;border-radius:8px;
 }
 
-body {
-    font-family: 'Arial', sans-serif;
-    line-height: 1.6;
-    color: #333;
-    background-color: #f8f9fa;
+/* Global link refinements */
+a.underline, .underline a {
+  text-decoration:underline;
+  text-decoration-thickness:2px;
+  text-underline-offset:3px;
 }
 
-/* Header Styles */
-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    padding: 1rem 0;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+/* Header shadow on scroll (toggled by JS) */
+body.scrolled header {
+  box-shadow: 0 10px 30px rgba(0,0,0,.35);
 }
 
-nav {
-    max-width: 1200px;
-    margin: 0 auto;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0 2rem;
+/* Animated gradient text subtle drift */
+.grad, .grad-alt {
+  animation: gradShift 8s ease-in-out infinite;
+  will-change: background-position;
+  background-size: 200% 200%;
+}
+@keyframes gradShift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
-nav h1 {
-    font-size: 2rem;
-    font-weight: bold;
+/* Section dividers (thin hairline like SPINX) */
+.section + .section {
+  border-top: 1px solid rgba(255,255,255,.06);
 }
 
-nav ul {
-    display: flex;
-    list-style: none;
-    gap: 2rem;
+/* Fancy button variant */
+.btn-ghost {
+  background: transparent;
+  border: 1px dashed rgba(255,255,255,.25);
+}
+.btn-ghost:hover { border-style: solid; }
+
+/* Subtle card tilt on hover */
+.card:hover img { transform: scale(1.03); transition: transform .35s ease; }
+
+/* Work card badge style (optional element) */
+.badge {
+  display:inline-flex;align-items:center;gap:6px;
+  padding:6px 10px;border-radius:999px;
+  background:rgba(110,231,242,.12);
+  color:#8feaff;border:1px solid rgba(110,231,242,.3);
+  font-weight:700;font-size:12px;letter-spacing:.05em;
 }
 
-nav a {
-    color: white;
-    text-decoration: none;
-    transition: opacity 0.3s ease;
+/* Text blocks rhythm */
+.lead + .work-grid,
+.lead + .services-grid,
+.lead + .clients-grid { margin-top: 14px; }
+
+/* Hover line for links inside text */
+a.hoverline { background-image: linear-gradient(currentColor,currentColor); background-position: 0 100%; background-size: 0 2px; background-repeat: no-repeat; transition: background-size .25s ease; }
+a.hoverline:hover { background-size: 100% 2px; }
+
+/* Reduce motion respects user pref */
+@media (prefers-reduced-motion: reduce) {
+  html:focus-within { scroll-behavior: auto; }
+  .grad, .grad-alt { animation: none; }
+  .card:hover img { transform:none; }
 }
 
-nav a:hover {
-    opacity: 0.8;
-}
-
-/* Main Content */
-main {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 2rem;
-}
-
-section {
-    margin-bottom: 3rem;
-    padding: 2rem;
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-}
-
-h2 {
-    color: #667eea;
-    margin-bottom: 1rem;
-    font-size: 1.8rem;
-}
-
-p {
-    margin-bottom: 1rem;
-    line-height: 1.7;
-}
-
-ul {
-    padding-left: 2rem;
-}
-
-li {
-    margin-bottom: 0.5rem;
-}
-
-/* Footer */
-footer {
-    background: #2c3e50;
-    color: white;
-    text-align: center;
-    padding: 2rem;
-    margin-top: 2rem;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-    nav {
-        flex-direction: column;
-        gap: 1rem;
-    }
-    
-    nav ul {
-        gap: 1rem;
-    }
-    
-    main {
-        padding: 1rem;
-    }
-    
-    section {
-        padding: 1rem;
-    }
-    
-    nav h1 {
-        font-size: 1.5rem;
-    }
-}
-
-/* Animation Effects */
-.fade-in {
-    opacity: 0;
-    transform: translateY(20px);
-    transition: all 0.6s ease;
-}
-
-.fade-in.active {
-    opacity: 1;
-    transform: translateY(0);
-}
-
-/* Buttons */
-.btn {
-    display: inline-block;
-    padding: 0.8rem 2rem;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    text-decoration: none;
-    border-radius: 5px;
-    transition: transform 0.3s ease;
-}
-
-.btn:hover {
-    transform: translateY(-2px);
+/* Print tidy */
+@media print {
+  header, .utility, .footer, .video-wrap, .clients-grid img { display:none !important; }
+  .section { padding: 12px 0; }
 }
